@@ -1,0 +1,9 @@
+.*
+**/Makefile
+**/qrc_*
+**/*.o
+**/*.wgt
+package/root
+app/pkg-config_wrapper.sh
+**/moc_*
+build*
