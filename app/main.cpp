@@ -117,11 +117,6 @@ int main(int argc, char* argv[])
             }
         });
 
-        QObject::connect(&visClient, &VisClient::carMessageReceived, [hs, myname](const QString& message) {
-            hs->onScreenMessage(
-                QJsonDocument(QJsonObject{{"app", myname}, {"message", message}}).toJson(QJsonDocument::Compact));
-        });
-
         // Read configuration from /etc/visclient/config.json
 
         QFile file("/etc/visclient/config.json");
@@ -148,8 +143,6 @@ int main(int argc, char* argv[])
         QQuickWindow* window = qobject_cast<QQuickWindow*>(root);
 
         QObject::connect(window, SIGNAL(frameSwapped()), qwm, SLOT(slotActivateSurface()));
-
-        visClient.connectTo(visUrl);
     }
 
     /*
@@ -178,14 +171,13 @@ int main(int argc, char* argv[])
 
     engine.load(QUrl(QStringLiteral("qrc:/visclient.qml")));
 
-    QObject* root        = engine.rootObjects().first();
-    QQuickWindow* window = qobject_cast<QQuickWindow*>(root);
+    QObject* root = engine.rootObjects().first();
 
-    root->setProperty("visAddressText", QVariant("Change you text here..."));
+    QQuickWindow* window = qobject_cast<QQuickWindow*>(root);
 
     window->setGeometry(0, 0, 600, 800);
     window->show();
-    */
+*/
 
     return app.exec();
 }
