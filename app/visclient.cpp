@@ -1,8 +1,5 @@
 #include "visclient.h"
 
-#include <QtCore/QJsonDocument>
-#include <QtCore/QJsonObject>
-
 QT_USE_NAMESPACE
 
 const unsigned long visClientTimeout = 1000;
@@ -47,16 +44,11 @@ void VisClient::disconnect()
     mWebSocket.close();
 }
 
-void VisClient::setCarMessage(const QString& message)
+void VisClient::sendMessage(const QString& message)
 {
-    qDebug() << "Set car message:" << message;
+    qDebug() << "Send message:" << message;
 
-    QJsonDocument json(QJsonObject{{"action", "set"},
-                                   {"path", "Attribute.Car.Message"},
-                                   {"value", message},
-                                   {"requestId", getRequestId()}});
-
-    mWebSocket.sendTextMessage(json.toJson(QJsonDocument::Compact));
+    mWebSocket.sendTextMessage(message);
 }
 
 /*******************************************************************************
@@ -66,8 +58,6 @@ void VisClient::setCarMessage(const QString& message)
 void VisClient::onConnected()
 {
     Q_EMIT VisClient::connected();
-
-    subscribe();
 }
 
 void VisClient::onDisconnected()
@@ -99,48 +89,7 @@ void VisClient::onError(QAbstractSocket::SocketError error)
 
 void VisClient::onTextMessageReceived(const QString& message)
 {
-    qDebug() << "Message received:" << message;
+    qDebug() << "Receive message:" << message;
 
-    QJsonParseError parseError;
-
-    QJsonObject json = QJsonDocument::fromJson(message.toUtf8(), &parseError).object();
-
-    if (parseError.error != QJsonParseError::NoError)
-    {
-        qCritical() << "Error parsing message at" << parseError.offset << ":" << parseError.errorString();
-        return;
-    }
-
-    if (json["action"].toString() == "subscribe")
-    {
-        mSubscribeId = json["subscriptionId"].toString();
-    }
-    else if (json["action"].toString() == "set")
-    {
-        // TODO: handle set errors
-    }
-    else if (json["action"].toString() == "subscription" && json["subscriptionId"].toString() == mSubscribeId)
-    {
-        qDebug() << "Car message:" << json["value"].toString();
-        emit VisClient::carMessageReceived(json["value"].toString());
-    }
-    else
-    {
-        qCritical() << "Malformed response received";
-    }
-}
-
-QString VisClient::getRequestId()
-{
-    static int requestId;
-
-    return QString::number(requestId++);
-}
-
-void VisClient::subscribe()
-{
-    QJsonDocument json(
-        QJsonObject{{"action", "subscribe"}, {"path", "Attribute.Car.Message"}, {"requestId", getRequestId()}});
-
-    mWebSocket.sendTextMessage(json.toJson(QJsonDocument::Compact));
+    Q_EMIT VisClient::messageReceived(message);
 }

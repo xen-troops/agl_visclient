@@ -8,12 +8,29 @@ import AGL.Demo.Controls 1.0
 ApplicationWindow {
     id: root
 
+    Component.onCompleted: {
+        visClient.connectTo(visAddress.text)
+    }
+
+    property bool enableButtons : false
+
     Connections {
         target: visClient
 
         onConnected: {
             visStatus.text = "Connected"
-            setButton.enabled = true
+            enableButtons = true
+
+            visClient.sendMessage(JSON.stringify({
+                action: "subscribe",
+                path: "Attribute.Car.Message",
+                requestId: "subscribeCarMessageId"}))
+
+            visClient.sendMessage(JSON.stringify({
+                action: "get",
+                path: "Attribute.Vehicle.UserIdentification.Users",
+                requestId: "getUsersId"}))
+
             console.log("Connected")
         }
 
@@ -23,13 +40,25 @@ ApplicationWindow {
         }
 
         onDisconnected: {
-            setButton.enabled = false
+            enableButtons = false
             console.log("Disconnected")
         }
 
-        onCarMessageReceived: {
-            carMessageList.insert(0, {"message" : message})
-            console.log("Car message:", message)
+        onMessageReceived: {
+            var jsonMessage = JSON.parse(message)
+
+            if (jsonMessage.hasOwnProperty("error")) {
+                visStatus.text = jsonMessage.error.Message
+            } else {
+                visStatus.text = "Connected"
+
+                if (jsonMessage.action == "subscription") {
+                    carMessageList.insert(0, {"message" : jsonMessage.value})
+                    console.log("Car message:", jsonMessage.value)
+                } else if (jsonMessage.requestId == "getUsersId") {
+                    users.text = jsonMessage.value.join(": ")
+                }
+            }
         }
     }
 
@@ -56,8 +85,6 @@ ApplicationWindow {
                     }
 
                     Button {
-                        id: visButton
-                        enabled: true
                         text: "Reconnect"
 
                         onClicked: {
@@ -79,12 +106,36 @@ ApplicationWindow {
                         id: carMessage
                     }
                     Button {
-                        id: setButton
                         text: "Set"
-                        enabled: false
+                        enabled: enableButtons
 
                         onClicked: {
-                            visClient.setCarMessage(carMessage.text)
+                            visClient.sendMessage(JSON.stringify({
+                                action: "set",
+                                path: "Attribute.Car.Message",
+                                value: carMessage.text,
+                                requestId: "setCarMessageId"}))
+                        }
+                    }
+                }
+
+                Label { text: 'Users:' }
+                Row {
+                    spacing: 20
+
+                    TextField {
+                        id: users
+                    }
+                    Button {
+                        text: "Set"
+                        enabled: enableButtons
+
+                        onClicked: {
+                            visClient.sendMessage(JSON.stringify({
+                                action: "set",
+                                path: "Attribute.Vehicle.UserIdentification.Users",
+                                value: users.text.replace(/\s/g, "").split(":"),
+                                requestId: "setUsersId"}))
                         }
                     }
                 }
