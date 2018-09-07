@@ -56,7 +56,7 @@ ApplicationWindow {
                     carMessageList.insert(0, {"message" : jsonMessage.value})
                     console.log("Car message:", jsonMessage.value)
                 } else if (jsonMessage.requestId == "getUsersId") {
-                    users.text = jsonMessage.value.join(": ")
+                    users.text = jsonMessage.value.join(":")
                 }
             }
         }
