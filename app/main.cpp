@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
 
     if (visUrl.isEmpty())
     {
-        visUrl = "wss://wwwivi:8088";
+        visUrl = "wss://localhost:8088";
     }
 
     context->setContextProperty(QStringLiteral("visUrl"), visUrl);
